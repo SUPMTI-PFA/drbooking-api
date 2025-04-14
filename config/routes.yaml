@@ -1,0 +1,26 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+api_login:
+    path: api/login
+    methods: ['POST']
+webhook:
+    path: /webhook
+    methods:
+    - post
+# entity_routes:
+#     resource: 'config/routes/entity_routes_placeholder.yaml'
+#     type: entity
+
+# homepage:
+#     path: /
+#     controller: App\Controller\DefaultController::index
+
+# trip_view:
+#     path: /tripviews
+#     controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController
+#     defaults:
+#         template: 'trip/index.html.twig'
+#         message: 'Welcome to the Trip View!'

@@ -1,0 +1,72 @@
+vich_uploader:
+     db_driver: orm
+     metadata:
+          type: attribute
+
+     mappings:
+          user_images:
+               uri_prefix: /uploads/user_images
+               upload_destination: "%kernel.project_dir%/public/uploads/user_images"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          company_images:
+               uri_prefix: /uploads/company_images
+               upload_destination: "%kernel.project_dir%/public/uploads/company_images"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          company_files:
+               uri_prefix: /uploads/company_files
+               upload_destination: "%kernel.project_dir%/public/uploads/company_files"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          user_files:
+               uri_prefix: /uploads/user_files
+               upload_destination: "%kernel.project_dir%/public/uploads/user_files"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          vehicle_pictures:
+               uri_prefix: /uploads/vehicle_pictures
+               upload_destination: "%kernel.project_dir%/public/uploads/vehicle_pictures"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          vehicle_files:
+               uri_prefix: /uploads/vehicle_files
+               upload_destination: "%kernel.project_dir%/public/uploads/vehicle_files"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          vehicle_category_icons:
+               uri_prefix: /uploads/vehicle_category_icons
+               upload_destination: "%kernel.project_dir%/public/uploads/vehicle_category_icons"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          vehicle_type_pictures:
+               uri_prefix: /uploads/vehicle_type_pictures
+               upload_destination: "%kernel.project_dir%/public/uploads/vehicle_type_pictures"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          user_document_files:
+               uri_prefix: /uploads/user_document_files
+               upload_destination: "%kernel.project_dir%/public/uploads/user_document_files"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          cancel_request_images:
+               uri_prefix: /uploads/cancel_request_images
+               upload_destination: "%kernel.project_dir%/public/uploads/cancel_request_images"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true
+          test_upload:
+               uri_prefix: /uploads/test_upload
+               upload_destination: "%kernel.project_dir%/public/uploads/test_upload"
+               namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+               delete_on_remove: true
+               delete_on_update: true

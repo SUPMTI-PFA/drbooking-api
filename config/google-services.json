@@ -1,0 +1,54 @@
+{
+    "project_info": {
+      "project_number": "1029778177610",
+      "project_id": "vycabdriver-8b484",
+      "storage_bucket": "vycabdriver-8b484.appspot.com"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:1029778177610:android:b45dca5b330350d3cd70b3",
+          "android_client_info": {
+            "package_name": "com.vycabdriver"
+          }
+        },
+        "oauth_client": [
+          {
+            "client_id": "1029778177610-0q2imr9rgt41imopuobvl2s8t3vsrp9e.apps.googleusercontent.com",
+            "client_type": 1,
+            "android_info": {
+              "package_name": "com.vycabdriver",
+              "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+            }
+          },
+          {
+            "client_id": "1029778177610-v8h0mp5bna7k86tefg7n56o7ne6sg7gh.apps.googleusercontent.com",
+            "client_type": 3
+          }
+        ],
+        "api_key": [
+          {
+            "current_key": "AIzaSyDnyHdWYtu-BckwEtqot0jcUQgLyokPNvE"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": [
+              {
+                "client_id": "1029778177610-ckf2an5772bila059n5nguhbkdthkp2f.apps.googleusercontent.com",
+                "client_type": 3
+              },
+              {
+                "client_id": "1029778177610-mdb3bgtk9oghcv9h4g559vd3ibj9a89j.apps.googleusercontent.com",
+                "client_type": 2,
+                "ios_info": {
+                  "bundle_id": "org.reactjs.native.example.VycabDriver"
+                }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }

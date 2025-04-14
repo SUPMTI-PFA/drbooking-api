@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Enum;
+
+enum NotifyStatus: string
+{
+    case NEW = 'new';
+    case INCREASE_ZONE = 'INCREASE_ZONE';
+    case DRIVER_ACCEPTED = 'DRIVER_ACCEPTED';
+    case DRIVER_REJECTED = 'DRIVER_REJECTED';
+    case PASSENGER_ACCEPTED = 'PASSENGER_ACCEPTED';
+    case DRIVER_ARRIVED = 'DRIVER_ARRIVED';
+    case NEW_MARKET_TRIP = 'NEW_MARKET_TRIP';
+    case ON_GOING_TRIP = 'ON_GOING_TRIP';
+    case FINISHED = 'FINISHED';
+    case _3D_SECURE_REQUIRED = '_3D_SECURE_REQUIRED';
+}

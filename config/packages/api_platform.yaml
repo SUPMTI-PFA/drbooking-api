@@ -1,0 +1,56 @@
+api_platform:
+  #swagger version
+  swagger:
+    versions: [3]
+    api_keys:
+      JWT:
+        name: Authorization
+        type: header
+    swagger_ui_extra_configuration:
+      filter: false
+  #doc settings
+  show_webby: false
+  title: Dr.Booking API
+  version: 1.0.0
+  description: "Dr.Booking"
+  openapi:
+    contact:
+      name: TCZ
+      url: https://www.tcz.com
+      email: mohammedbenseghir.online@gmail.com
+
+  formats:
+    jsonld: ["application/ld+json"]
+    html: ["text/html"]
+    jsonapi: [application/vnd.api+json]
+    json: ['application/json', 'multipart/form-data']
+  docs_formats:
+    jsonld: ['application/ld+json']
+    json: ['application/json', 'multipart/form-data']
+    jsonopenapi: ['application/vnd.openapi+json']
+    html: ['text/html']
+
+  #pagination
+  collection:
+    pagination:
+      items_per_page_parameter_name: 'items_per_page'
+    exists_parameter_name: "not_null"
+  defaults:
+    order: { id: 'DESC' }
+    stateless: true
+    http_cache: true
+    eager_loading:
+        # enabled: true
+        max_joins: 2000
+        # force_eager: true
+    cache_headers:
+      #   max_age: 3600
+      #   shared_max_age: 3600
+      vary: ["Content-Type", "Authorization", "Origin", "etag"]
+
+    pagination_maximum_items_per_page: 50
+    pagination_client_items_per_page: true
+    pagination_items_per_page: 30
+    pagination_client_enabled: true
+framework:
+    validation: { enabled: true }

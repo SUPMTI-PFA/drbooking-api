@@ -1,0 +1,1 @@
+[04-Aug-2023 20:45:08 Europe/Paris] 2023-08-04T20:45:08+02:00 [info] User Deprecated: The "Monolog\Logger" class is considered final. It may change without further notice as of its next major version. You should not extend it from "Symfony\Bridge\Monolog\Logger".
