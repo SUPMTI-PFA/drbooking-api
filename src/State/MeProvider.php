@@ -28,11 +28,7 @@ class MeProvider implements ProviderInterface
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
     {
         $user = $this->security->getUser();
-        return $this->getDataOfUser($user, $user->getAccountType());
-
-        // if ($user->getStatus() == 1) {
-        // } else {
-        //     throw new \Exception("Votre statut n'est pas encore valide.");
-        // }
+        /** @var User $user */
+        return $this->getDataOfUser($user, $user->getAccountType()->value);
     }
 }

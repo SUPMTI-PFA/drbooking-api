@@ -57,17 +57,17 @@ class RouteVoter extends Voter
         $userRoles = $user->getRole();
         $this->entityManager->initializeObject($userRoles);
 
-        $currentRoles = [$userRoles->getRoleKey()];
+        $currentRoles = [$userRoles->getName()];
 
         // dd($currentRoles);
 
 
         // Check if any of the user's roles match any role that has access to the route
         foreach ($route->getRoles() as $allowedRole) {
-            // if (in_array($allowedRole->getRoleKey(), $currentRoles)) {
+            // if (in_array($allowedRole->getName(), $currentRoles)) {
             //     return true;
             // }
-            if ($allowedRole->getRoleKey() === $user->getRole()->getRoleKey()) {
+            if ($allowedRole->getName() === $user->getRole()->getName()) {
                 return true;
             }
         }

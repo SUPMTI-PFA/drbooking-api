@@ -19,6 +19,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Controller\UserController;
+use App\Enum\AccountType;
 use App\Filter\RecursiveDateFilter;
 use App\Filter\RecursiveSearchFilter;
 use DateTimeImmutable;
@@ -134,9 +135,32 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(["user:read"])]
     private ?Role $role = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $fcmToken = null;
+
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?DoctorProfile $doctorProfile = null;
+
+    /**
+     * @var Collection<int, Availability>
+     */
+    #[ORM\OneToMany(mappedBy: 'doctor', targetEntity: Availability::class)]
+    private Collection $availabilities;
+
+    /**
+     * @var Collection<int, Appointment>
+     */
+    #[ORM\OneToMany(mappedBy: 'patient', targetEntity: Appointment::class)]
+    private Collection $appointments;
+
+    #[ORM\Column(length: 255, enumType: AccountType::class)]
+    private ?AccountType $accountType = null;
+
     public function __construct()
     {
         $this->createdAt = new DateTimeImmutable();
+        $this->availabilities = new ArrayCollection();
+        $this->appointments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -342,6 +366,112 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setNewsletter(bool $newsletter): static
     {
         $this->newsletter = $newsletter;
+
+        return $this;
+    }
+
+    public function getFcmToken(): ?string
+    {
+        return $this->fcmToken;
+    }
+
+    public function setFcmToken(?string $fcmToken): static
+    {
+        $this->fcmToken = $fcmToken;
+
+        return $this;
+    }
+
+    public function getDoctorProfile(): ?DoctorProfile
+    {
+        return $this->doctorProfile;
+    }
+
+    public function setDoctorProfile(?DoctorProfile $doctorProfile): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($doctorProfile === null && $this->doctorProfile !== null) {
+            $this->doctorProfile->setUser(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($doctorProfile !== null && $doctorProfile->getUser() !== $this) {
+            $doctorProfile->setUser($this);
+        }
+
+        $this->doctorProfile = $doctorProfile;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Availability>
+     */
+    public function getAvailabilities(): Collection
+    {
+        return $this->availabilities;
+    }
+
+    public function addAvailability(Availability $availability): static
+    {
+        if (!$this->availabilities->contains($availability)) {
+            $this->availabilities->add($availability);
+            $availability->setDoctor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAvailability(Availability $availability): static
+    {
+        if ($this->availabilities->removeElement($availability)) {
+            // set the owning side to null (unless already changed)
+            if ($availability->getDoctor() === $this) {
+                $availability->setDoctor(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Appointment>
+     */
+    public function getAppointments(): Collection
+    {
+        return $this->appointments;
+    }
+
+    public function addAppointment(Appointment $appointment): static
+    {
+        if (!$this->appointments->contains($appointment)) {
+            $this->appointments->add($appointment);
+            $appointment->setPatient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAppointment(Appointment $appointment): static
+    {
+        if ($this->appointments->removeElement($appointment)) {
+            // set the owning side to null (unless already changed)
+            if ($appointment->getPatient() === $this) {
+                $appointment->setPatient(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getAccountType(): ?AccountType
+    {
+        return $this->accountType;
+    }
+
+    public function setAccountType(AccountType $accountType): static
+    {
+        $this->accountType = $accountType;
 
         return $this;
     }

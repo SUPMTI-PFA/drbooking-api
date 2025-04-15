@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\TripService;
+namespace App\Service\Notify;
 
 use App\Enum\NotifyStatus;
 use App\Service\Notify\FirebaseNotify;
@@ -29,8 +29,6 @@ class NotifyService
 
         $this->notify->sendNotificationToMultipleDevices($fcmTokens, $notificationData['data'], $notificationData['dataPayload']);
     }
-
-
 
     private function prepareNotificationData(mixed $trip, NotifyStatus $status = NotifyStatus::NEW): array
     {
