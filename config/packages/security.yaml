@@ -1,6 +1,5 @@
 security:
     enable_authenticator_manager: true
-
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
@@ -8,10 +7,11 @@ security:
     providers:
         # used to reload user from session & other features (e.g. switch_user)
         app_user_provider:
-            entity:
-                class: App\Entity\User
-                property: email
-        # used to reload user from session & other features (e.g. switch_user)
+            id: App\Security\UserProvider
+        # app_user_provider:
+        #     entity:
+        #         class: App\Entity\User
+        #         property: email
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -19,7 +19,6 @@ security:
         login:
             pattern: ^/api/login
             stateless: true
-            entry_point: App\Security\CustomEntryPoint
             json_login:
                 check_path: /api/login
                 username_path: email
@@ -29,15 +28,16 @@ security:
         api:
             pattern: ^/api
             stateless: true
-            jwt: ~
-
+            entry_point: App\Security\CustomEntryPoint
+            jwt:
+                ~
+        main:
+            lazy: true
+            provider: app_user_provider
+            logout:
+                path: app_logout
                 # where to redirect after logout
                 # target: app_any_route
-
-        # main:
-        #     lazy: true
-        #     provider: app_user_provider
-
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -46,28 +46,15 @@ security:
             # switch_user: true
     role_hierarchy:
             ROLE_USER: ROLE_USER
-            ROLE_ADMIN: [ROLE_USER, ROLE_ADMIN]
-            ROLE_DRIVER: ROLE_DRIVER
-            ROLE_COMPANY: ROLE_COMPANY
-        
-
+            ROLE_ADMIN:   [ROLE_USER, ROLE_ADMIN]
 
     # Easy way to control access for large sections of your site
-    # Note: Only the first access control that matches will be used
+    # Note: Only the *first* access control that matches will be used
     access_control:
-        # - { path: ^/api/login, roles: ROLE_ADMIN }
-        # - { path: ^/api/(machines|categories)/\d+, roles: [ ROLE_USER] }
-        # - { path: ^/api/machines/\d+, roles: [IS_AUTHENTICATED_FULLY, ROLE_USER] }
-        # - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }  # Allow anonymous access to the login endpoint
-        # - { path: ^/api, roles: ROLE_USER }  # Require authenticated users for all other API endpoints
-        # - { path: ^/api$, roles: ROLE_ADMIN } # Allows accessing the Swagger UI
-        # - { path: ^/api/docs, roles: ROLE_ADMIN } # Allows accessing the Swagger UI docs
-        # - { path: ^/api/, roles: PUBLIC_ACCESS } # Allows accessing the Swagger UI docs
-
-    # lexik_jwt_authentication:
-    #     failure:
-    #         message_key: "you are not authorized to access this url"
-
+        # - { path: ^/admin, roles: ROLE_ADMIN }
+        # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        # - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:

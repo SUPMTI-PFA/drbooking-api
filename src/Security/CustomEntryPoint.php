@@ -9,7 +9,7 @@ use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface
 
 class CustomEntryPoint implements AuthenticationEntryPointInterface
 {
-    public function start(Request $request, AuthenticationException $authException = null): Response
+    public function start(Request $request, ?AuthenticationException $authException = null): Response
     {
         $data = [
             'code' => 401,

@@ -6,8 +6,46 @@ use App\Enum\AppointmentStatus;
 use App\Repository\AppointmentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use App\Filter\RecursiveDateFilter;
+use App\Filter\RecursiveSearchFilter;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: AppointmentRepository::class)]
+#[ApiFilter(RecursiveSearchFilter::class)]
+#[ApiFilter(RecursiveDateFilter::class)]
+#[ApiResource(
+    paginationClientItemsPerPage: true,
+    normalizationContext: ['groups' => ['appointment:read']],
+    operations: [
+        new GetCollection(
+            security: "is_granted('ACCESS_ROUTE', 'SHOW_ALL_APPOINTMENTS')",
+            securityMessage: 'You are not authorized to access this resource.',
+        ),
+        new Get(
+            security: "is_granted('ACCESS_ROUTE', 'SHOW_APPOINTMENT')",
+            securityMessage: 'You are not authorized to access this resource.',
+        ),
+        new Post(
+            security: "is_granted('ACCESS_ROUTE', 'ADD_APPOINTMENT')",
+            securityMessage: 'You are not authorized to access this resource.',
+        ),
+        new Put(
+            security: "is_granted('ACCESS_ROUTE', 'UPDATE_APPOINTMENT')",
+            securityMessage: 'You are not authorized to access this resource.',
+        ),
+        new Delete(
+            security: "is_granted('ACCESS_ROUTE', 'DELETE_APPOINTMENT')",
+            securityMessage: 'You are not authorized to access this resource.',
+        )
+    ]
+)]
 class Appointment
 {
     #[ORM\Id]

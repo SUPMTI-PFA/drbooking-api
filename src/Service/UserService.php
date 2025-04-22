@@ -2,25 +2,29 @@
 
 namespace App\Service;
 
-use App\Entity\NewsEmail;
 use App\Entity\User;
+use App\Entity\DoctorProfile;
+use App\Entity\NewsEmail;
+use App\Entity\Speciality;
+use App\Enum\AccountType;
 use App\Helpers\Helpers;
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mime\Address;
+use Exception;
+use DateTimeImmutable;
 
 class UserService
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private Helpers $helpers,
-        private ParameterBagInterface $parameters,
-        private GlobalService $globalService
+        private GlobalService $globalService,
+        private ParameterBagInterface $parameters
     ) {}
 
     private function convertDataTypes(array $data): array
@@ -28,130 +32,220 @@ class UserService
         if (isset($data['newsletter'])) {
             $data['newsletter'] = (bool)$data['newsletter'];
         }
-
         return $data;
     }
 
-    public function createUser($request): User
+    //% --------------------------------
+    //% - Handle Doctor Profile
+    //% --------------------------------
+    private function handleDoctorProfile(User $user, array $doctorData, bool $isUpdate = false): void
     {
-        if ($request->getMethod() == 'POST') {
-            $user = new User();
-            $allParts = $request->request->all();
-            $allParts = $this->convertDataTypes($allParts);
-
-            $user = $this->globalService->PersistEntityDenormalizer($allParts, $user::class);
-            $user->setPassword(password_hash($user->getPassword(), PASSWORD_BCRYPT));
-
-            if ($request->files->get("photo")) {
-                $user->setFile($request->files->get("photo"));
-            }
-
-            if (isset($allParts['newsletter']) && $allParts['newsletter'] === true) {
-                $newsletter = new NewsEmail();
-                $newsletter->setEmail($allParts['email']);
-
-                $this->entityManager->persist($newsletter);
-            }
-
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
-
-            return $user;
+        if ($user->getAccountType() !== AccountType::DOCTOR) {
+            return;
         }
 
-        throw new Exception("Invalid request method");
+        $doctorProfile = $isUpdate ? $user->getDoctorProfile() : new DoctorProfile();
+
+        if (!$doctorProfile) {
+            $doctorProfile = new DoctorProfile();
+            // dd($user);
+            $doctorProfile->setUser($user);
+            $doctorProfile->setIsActive(true);
+        }
+
+        // Update entity using denormalizer
+        $this->globalService->UpdateEntityDenormalizer($doctorProfile, $doctorData, DoctorProfile::class);
+        $doctorProfile->setUser($user);
+
+        // Special handling for speciality relationship
+        // if (isset($doctorData['speciality'])) {
+        //     $speciality = $this->entityManager
+        //         ->getRepository(Speciality::class)
+        //         ->find($doctorData['speciality']);
+
+        //     if (!$speciality) {
+        //         throw new Exception("Speciality not found");
+        //     }
+        //     $doctorProfile->setSpeciality($speciality);
+        // }
+
+        if (!$isUpdate || !$doctorProfile->getId()) {
+            $this->entityManager->persist($doctorProfile);
+        }
     }
 
     //% --------------------------------
-    //% - Update User PUT
+    //% - Handle Newsletter
     //% --------------------------------
-    public function updateUser($request, $userId): User
+    private function handleNewsletter(string $email, bool $subscribe): void
     {
-        $parameters = $request->request->all();
-        $content = $request->getContent();
-        $files = $request->files->all();
-
-        if (empty($parameters) && empty($content) && empty($files)) {
-            throw new Exception("Request is empty");
+        if ($subscribe) {
+            $newsletter = new NewsEmail();
+            $this->globalService->UpdateEntityDenormalizer(
+                $newsletter,
+                ['email' => $email],
+                NewsEmail::class
+            );
+            $this->entityManager->persist($newsletter);
         }
-
-        if ($request->getMethod() == 'PUT') {
-            $user = $this->entityManager->getRepository(User::class)->find($userId);
-
-            if (!$user) {
-                throw new Exception("User not found");
-            }
-
-            $allParts = Helpers::parseMultipartFormData($request);
-
-            $userData = $allParts;
-            $photo = $allParts['photo'] ?? null;
-            if (isset($userData['photo'])) {
-                unset($userData['photo']);
-            }
-
-            $this->globalService->UpdateEntityDenormalizer($user, $userData, $user::class);
-
-            if (!empty($allParts["password"])) {
-                $user->setPassword(password_hash($allParts["password"], PASSWORD_BCRYPT));
-            }
-            if ($photo && $photo instanceof UploadedFile) {
-                $user->setFile($photo);
-            }
-
-            $user->setUpdatedAt(new \DateTimeImmutable());
-            $this->entityManager->flush();
-
-            return $user;
-        }
-
-        throw new Exception("Invalid request method or request data");
     }
 
-    public function handleForgotPassword(string $email, MailerInterface $mailer, TokenGeneratorInterface $tokenGenerator): array
+    //% --------------------------------
+    //% - Create User
+    //% --------------------------------
+    public function createUser(Request $request): User
     {
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+        if ($request->getMethod() !== 'POST') {
+            throw new Exception("Invalid request method");
+        }
 
-        $fromEmail = 'noreply@tricodezone.com';
-        $toEmail = 'mohammedbenseghir.online@gmail.com';
+        $data = $request->request->all();
+        $data = $this->convertDataTypes($data);
+        $doctorData = $data['doctorProfile'] ?? [];
+
+        $keysToUnset = [
+            'doctorProfile'
+        ];
+
+        foreach ($keysToUnset as $key) {
+            unset($data[$key]);
+        }
+
+        // Validate accountType
+        $accountTypeValue = $data['accountType'] ?? null;
+        if (!$accountTypeValue || !AccountType::tryFrom($accountTypeValue)) {
+            throw new Exception("Invalid or missing accountType (PATIENT | DOCTOR)");
+        }
+
+        // /** @var User $user */
+        $user = $this->globalService->PersistEntityDenormalizer($data, User::class);
+
+        // Special handling for password and account type
+        $user->setPassword(password_hash($user->getPassword(), PASSWORD_BCRYPT));
+        $user->setAccountType(AccountType::from($accountTypeValue));
+
+        // Handle profile photo
+        $photoFile = $request->files->get('photo');
+        if ($photoFile instanceof UploadedFile) {
+            $user->setFile($photoFile);
+        }
+
+        // Handle newsletter
+        if (!empty($data['newsletter'])) {
+            $this->handleNewsletter($user->getEmail(), true);
+        }
+
+        // Handle doctor profile
+        if ($user->getAccountType() === AccountType::DOCTOR) {
+            if (empty($doctorData['speciality']) || empty($doctorData['address'])) {
+                throw new Exception("DoctorProfile data (speciality, address) required for DOCTOR");
+            }
+            $this->handleDoctorProfile($user, $doctorData);
+        }
+
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        return $user;
+    }
+
+    //% --------------------------------
+    //% - Update User
+    //% --------------------------------
+    public function updateUser(Request $request, int $userId): User
+    {
+        if ($request->getMethod() !== 'PUT') {
+            throw new Exception("Invalid request method");
+        }
+
+        /** @var User $user */
+        $user = $this->entityManager->getRepository(User::class)->find($userId);
+        if (!$user) {
+            throw new Exception("User not found");
+        }
+
+        $parts = Helpers::parseMultipartFormData($request);
+        $parts = $this->convertDataTypes($parts);
+
+        // Update base fields using denormalizer
+        $this->globalService->UpdateEntityDenormalizer($user, $parts, User::class);
+
+        // Special handling for password and account type
+        if (!empty($parts['accountType']) && AccountType::tryFrom($parts['accountType'])) {
+            $user->setAccountType(AccountType::from($parts['accountType']));
+        }
+
+        if (!empty($parts['password'])) {
+            $user->setPassword(password_hash($parts['password'], PASSWORD_BCRYPT));
+        }
+
+        // Photo update
+        $photoFile = $request->files->get('photo');
+        if ($photoFile instanceof UploadedFile) {
+            $user->setFile($photoFile);
+        }
+
+        // Handle doctor profile
+        if ($user->getAccountType() === AccountType::DOCTOR && !empty($parts['doctorProfile'])) {
+            $this->handleDoctorProfile($user, $parts['doctorProfile'], true);
+        }
+
+        $user->setUpdatedAt(new DateTimeImmutable());
+        $this->entityManager->flush();
+
+        return $user;
+    }
+
+    //% --------------------------------
+    //% - Handle Forgot Password
+    //% --------------------------------
+    public function handleForgotPassword(
+        string $email,
+        MailerInterface $mailer,
+        TokenGeneratorInterface $tokenGenerator
+    ): array {
+        $user = $this->entityManager
+            ->getRepository(User::class)
+            ->findOneBy(['email' => $email]);
 
         if (!$user) {
-            return ["message" => "No user found with this email address!", "status" => false];
+            return ['status' => false, 'message' => 'No user found with this email'];
         }
 
         $token = $tokenGenerator->generateToken();
         $user->setResetToken($token);
         $this->entityManager->flush();
 
-        $url = $_ENV["APP_URL"] . '/reset_password/' . $token;
-
+        $resetUrl = $_ENV['APP_URL'] . '/reset_password/' . $token;
         $emailMessage = (new TemplatedEmail())
-            ->from(new Address($fromEmail, 'TriCodeZone'))
-            // ->to($toEmail)
+            ->from(new Address('noreply@tricodezone.com', 'TriCodeZone'))
             ->to($user->getEmail())
             ->subject('Password Reset Request')
             ->htmlTemplate('emails/reset_password.html.twig')
-            ->context(['url' => $url, 'user' => $user]);
+            ->context(['url' => $resetUrl, 'user' => $user]);
 
         $mailer->send($emailMessage);
 
-        return ["message" => "Message sent. Please check your email.", "status" => true];
+        return ['status' => true, 'message' => 'Reset email sent'];
     }
 
-    public function handleResetPassword(string $token, string $plainPassword): array
+    //% --------------------------------
+    //% - Handle Reset Password
+    //% --------------------------------
+    public function handleResetPassword(string $token, string $newPassword): array
     {
-        $user = $this->entityManager->getRepository(User::class)->findOneBy(['resetToken' => $token]);
+        $user = $this->entityManager
+            ->getRepository(User::class)
+            ->findOneBy(['resetToken' => $token]);
 
         if (!$user) {
-            return ["message" => "Invalid token or user not found.", "status" => false];
+            return ['status' => false, 'message' => 'Invalid token'];
         }
 
-        $user->setResetToken('');
-        $encodedPassword = password_hash($plainPassword, PASSWORD_BCRYPT);
-        $user->setPassword($encodedPassword);
-
+        $user->setResetToken(null);
+        $user->setPassword(password_hash($newPassword, PASSWORD_BCRYPT));
         $this->entityManager->flush();
 
-        return ["message" => "Password successfully updated.", "status" => true];
+        return ['status' => true, 'message' => 'Password updated successfully'];
     }
 }

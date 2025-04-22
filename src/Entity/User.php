@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Delete;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -34,20 +35,21 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
 #[ApiFilter(RecursiveDateFilter::class)]
 #[ApiResource(
     normalizationContext: ['groups' => ['user:read']],
+    denormalizationContext: ['groups' => ['user:write']],
     operations: [
         new GetCollection(
-            security: "is_granted('ACCESS_ROUTE', 'SHOW_ALL_USERS')",
-            securityMessage: 'You are not authorized to access this resource.',
+            // security: "is_granted('ACCESS_ROUTE', 'SHOW_ALL_USERS')",
+            // securityMessage: 'You are not authorized to access this resource.',
         ),
         new Get(
-            security: "is_granted('ACCESS_ROUTE', 'SHOW_USER')",
-            securityMessage: 'You are not authorized to access this resource.',
+            // security: "is_granted('ACCESS_ROUTE', 'SHOW_USER')",
+            // securityMessage: 'You are not authorized to access this resource.',
         ),
         new Post(
             deserialize: false,
             controller: UserController::class,
-            security: "is_granted('ACCESS_ROUTE', 'ADD_USER')",
-            securityMessage: 'You are not authorized to access this resource.',
+            // security: "is_granted('ACCESS_ROUTE', 'ADD_USER')",
+            // securityMessage: 'You are not authorized to access this resource.',
         ),
         new Post(
             deserialize: false,
@@ -77,35 +79,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["review:read", "order:read", "user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255, unique: true, nullable: true)]
-    #[Groups(["review:read", "order:read", "user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255, unique: true, nullable: true)]
-    #[Groups(["review:read", "order:read", "user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(["review:read", "order:read", "user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(["review:read", "order:read", "user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(["review:read", "order:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?string $telephone = null;
 
     #[ORM\Column]
-    #[Groups(["user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?bool $newsletter = null;
 
     #[ORM\Column]
-    #[Groups(["review:read", "order:read", "user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private array $roles = [];
 
     /**
@@ -115,7 +117,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(["review:read", "order:read", "user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?string $photo = null;
 
     #[Vich\UploadableField(mapping: "user_images", fileNameProperty: "photo")]
@@ -125,35 +127,40 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $resetToken = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(["review:read", "order:read", "user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'users')]
-    #[Groups(["user:read"])]
+    #[Groups(["user:read", "user:write"])]
     private ?Role $role = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(["user:read", "user:write"])]
     private ?string $fcmToken = null;
 
     #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    #[Groups(["user:read", "user:write", "user:write"])]
     private ?DoctorProfile $doctorProfile = null;
 
     /**
      * @var Collection<int, Availability>
      */
     #[ORM\OneToMany(mappedBy: 'doctor', targetEntity: Availability::class)]
+    #[Groups(["user:read", "user:write"])]
     private Collection $availabilities;
 
     /**
      * @var Collection<int, Appointment>
      */
     #[ORM\OneToMany(mappedBy: 'patient', targetEntity: Appointment::class)]
+    #[Groups(["user:read", "user:write"])]
     private Collection $appointments;
 
     #[ORM\Column(length: 255, enumType: AccountType::class)]
+    #[Groups(["user:read", "user:write"])]
     private ?AccountType $accountType = null;
 
     public function __construct()
@@ -161,6 +168,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->createdAt = new DateTimeImmutable();
         $this->availabilities = new ArrayCollection();
         $this->appointments = new ArrayCollection();
+        $this->newsletter = true;
     }
 
     public function getId(): ?int
@@ -269,7 +277,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    #[Groups(["review:read", "order:read", "user:read"])]
+    #[Groups(["user:read", "user:write"])]
     public function getFullName(): string
     {
         return trim($this->firstName . ' ' . $this->lastName);
@@ -298,17 +306,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->file = $file;
     }
 
-    // public function getTelephone(): ?string
-    // {
-    //     return $this->telephone;
-    // }
+    public function getTelephone(): ?string
+    {
+        return $this->telephone;
+    }
 
-    // public function setTelephone(?string $telephone): self
-    // {
-    //     $this->telephone = $telephone;
+    public function setTelephone(?string $telephone): self
+    {
+        $this->telephone = $telephone;
 
-    //     return $this;
-    // }
+        return $this;
+    }
 
     public function getUsername(): ?string
     {
