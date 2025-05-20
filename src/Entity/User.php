@@ -82,6 +82,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(["user:read", "user:write"])]
     private ?int $id = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(["user:read", "user:write"])]
+    private ?string $slug = null;
+
     #[ORM\Column(length: 255, unique: true, nullable: true)]
     #[Groups(["user:read", "user:write"])]
     private ?string $email = null;
@@ -97,6 +101,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(["user:read", "user:write"])]
     private ?string $lastName = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(["user:read", "user:write"])]
+    private ?string $fullName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(["user:read", "user:write"])]
@@ -163,6 +171,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(["user:read", "user:write"])]
     private ?AccountType $accountType = null;
 
+    #[ORM\Column(length: 255)]
+    #[Groups(["user:read", "user:write"])]
+    private ?string $gender = null;
+
     public function __construct()
     {
         $this->createdAt = new DateTimeImmutable();
@@ -174,6 +186,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(?string $slug): self
+    {
+        $this->slug = $slug;
+
+        return $this;
     }
 
     public function getEmail(): ?string
@@ -277,11 +301,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    #[Groups(["user:read", "user:write"])]
-    public function getFullName(): string
+    public function getFullName(): ?string
     {
-        return trim($this->firstName . ' ' . $this->lastName);
+        return $this->fullName;
     }
+
+    public function setFullName(?string $fullName): self
+    {
+        $this->fullName = $fullName;
+
+        return $this;
+    }
+
+    // #[Groups(["user:read", "user:write"])]
+    // public function getFullName(): string
+    // {
+    //     return trim($this->firstName . ' ' . $this->lastName);
+    // }
 
     public function getPhoto(): ?string
     {
@@ -480,6 +516,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setAccountType(AccountType $accountType): static
     {
         $this->accountType = $accountType;
+
+        return $this;
+    }
+
+    public function getGender(): ?string
+    {
+        return $this->gender;
+    }
+
+    public function setGender(string $gender): static
+    {
+        $this->gender = $gender;
 
         return $this;
     }

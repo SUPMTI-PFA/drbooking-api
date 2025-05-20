@@ -8,6 +8,7 @@ use App\Entity\NewsEmail;
 use App\Entity\Speciality;
 use App\Enum\AccountType;
 use App\Helpers\Helpers;
+use App\Util\SlugGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,7 +25,8 @@ class UserService
     public function __construct(
         private EntityManagerInterface $entityManager,
         private GlobalService $globalService,
-        private ParameterBagInterface $parameters
+        private SlugGenerator $slugGenerator,
+        private ParameterBagInterface $parameters,
     ) {}
 
     private function convertDataTypes(array $data): array
@@ -119,6 +121,11 @@ class UserService
 
         // /** @var User $user */
         $user = $this->globalService->PersistEntityDenormalizer($data, User::class);
+        $fullName = $data['firstName'] . ' ' . $data['lastName'];
+
+        $slug = $this->slugGenerator->generateSlug($fullName,  User::class);
+        $user->setSlug($slug);
+        $user->setfullName($fullName);
 
         // Special handling for password and account type
         $user->setPassword(password_hash($user->getPassword(), PASSWORD_BCRYPT));

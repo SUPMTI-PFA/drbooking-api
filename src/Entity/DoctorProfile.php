@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\DoctorProfileRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiFilter;
@@ -72,6 +74,26 @@ class DoctorProfile
     #[Groups(["user:read", "doctorProfile:read"])]
     private ?bool $isActive = true;
 
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(["user:read", "doctorProfile:read"])]
+    private ?array $specializations = [];
+
+    /**
+     * @var Collection<int, DoctorEducation>
+     */
+    #[ORM\OneToMany(mappedBy: 'doctorProfile', targetEntity: DoctorEducation::class, cascade: ['persist', 'remove'])]
+    #[Groups(["user:read", "doctorProfile:read"])]
+    private Collection $doctorEducation;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(["user:read", "doctorProfile:read"])]
+    private ?int $experience = null;
+
+    public function __construct()
+    {
+        $this->doctorEducation = new ArrayCollection();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -133,6 +155,60 @@ class DoctorProfile
     public function setIsActive(bool $isActive): static
     {
         $this->isActive = $isActive;
+
+        return $this;
+    }
+
+    public function getSpecializations()
+    {
+        return $this->specializations;
+    }
+
+    public function setSpecializations($specializations)
+    {
+        $this->specializations = $specializations;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DoctorEducation>
+     */
+    public function getDoctorEducation(): Collection
+    {
+        return $this->doctorEducation;
+    }
+
+    public function addDoctorEducation(DoctorEducation $doctorEducation): static
+    {
+        if (!$this->doctorEducation->contains($doctorEducation)) {
+            $this->doctorEducation->add($doctorEducation);
+            $doctorEducation->setDoctorProfile($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDoctorEducation(DoctorEducation $doctorEducation): static
+    {
+        if ($this->doctorEducation->removeElement($doctorEducation)) {
+            // set the owning side to null (unless already changed)
+            if ($doctorEducation->getDoctorProfile() === $this) {
+                $doctorEducation->setDoctorProfile(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getExperience(): ?int
+    {
+        return $this->experience;
+    }
+
+    public function setExperience(?int $experience): static
+    {
+        $this->experience = $experience;
 
         return $this;
     }
